@@ -38,9 +38,21 @@ You don't have to type commands — say things like *"spec out user auth"*, *"pl
 Requires **Python ≥ 3.11** and `pip`.
 
 ```bash
-pip install .            # from this repo, or: pip install dsh-sdd
-cd /path/to/your-project # inside a git repo (project root detected via .git)
+# Option A — no clone, straight from GitHub:
+pip install "git+ssh://git@github.com/rafael-ariascalles/spec-kit-deepseek-harness.git"
+
+# Option B — from a local checkout:
+pip install .
+
+# Then, inside a git repo (project root detected via .git):
+cd /path/to/your-project
 dsh-sdd init
+```
+
+Verify the install:
+
+```bash
+dsh-sdd list   # should show 9 sdd-* skills, templates, agents, and constitution: present
 ```
 
 `init` scaffolds:
