@@ -1,0 +1,169 @@
+---
+name: sdd-clarify
+description: Identify underspecified areas in a feature spec by asking up to 5 targeted clarification questions and encoding answers back into the spec. Use when the user wants to clarify, refine, or resolve ambiguities in a spec.
+---
+
+## User Input
+
+The input text the user provided in the conversation guides prioritization (e.g., a domain to focus on, or an explicit "skip clarification" signal for an exploratory spike).
+
+You **MUST** consider the user input before proceeding (if not empty).
+
+## Outline
+
+**Goal**: Detect and reduce ambiguity or missing decision points in the active feature specification and record the clarifications directly in the spec file.
+
+Note: This clarification workflow is expected to run (and be completed) BEFORE invoking `sdd-plan`. If the user explicitly states they are skipping clarification (e.g., exploratory spike), you may proceed, but must warn that downstream rework risk increases.
+
+Execution steps:
+
+1. **Locate the feature directory**:
+   - Read `.specify/feature.json` for `feature_directory` (and derive `FEATURE_SPEC` = `FEATURE_DIR/spec.md`). If absent, infer the most recently created `specs/` feature directory, or ask the user which feature to clarify.
+   - If `FEATURE_SPEC` is missing, instruct the user to run `sdd-specify` first (do not create a new spec here).
+
+2. **IF EXISTS**: Load `memory/constitution.md` for project principles and governance constraints.
+
+3. Load the current spec file. Perform a structured ambiguity & coverage scan using this taxonomy. For each category, mark status: Clear / Partial / Missing. Produce an internal coverage map used for prioritization (do not output the raw map unless no questions will be asked).
+
+   - **Functional Scope & Behavior**: Core user goals & success criteria; explicit out-of-scope declarations; user roles / personas differentiation.
+   - **Domain & Data Model**: Entities, attributes, relationships; identity & uniqueness rules; lifecycle/state transitions; data volume / scale assumptions.
+   - **Interaction & UX Flow**: Critical user journeys / sequences; error/empty/loading states; accessibility or localization notes.
+   - **Non-Functional Quality Attributes**: Performance (latency, throughput targets); scalability (horizontal/vertical, limits); reliability & availability (uptime, recovery expectations); observability (logging, metrics, tracing signals); security & privacy (authN/Z, data protection, threat assumptions); compliance / regulatory constraints (if any).
+   - **Integration & External Dependencies**: External services/APIs and failure modes; data import/export formats; protocol/versioning assumptions.
+   - **Edge Cases & Failure Handling**: Negative scenarios; rate limiting / throttling; conflict resolution (e.g., concurrent edits).
+   - **Constraints & Tradeoffs**: Technical constraints (language, storage, hosting); explicit tradeoffs or rejected alternatives.
+   - **Terminology & Consistency**: Canonical glossary terms; avoided synonyms / deprecated terms.
+   - **Completion Signals**: Acceptance criteria testability; measurable Definition-of-Done style indicators.
+   - **Misc / Placeholders**: TODO markers / unresolved decisions; ambiguous adjectives ("robust", "intuitive") lacking quantification.
+
+   For each category with Partial or Missing status, add a candidate question opportunity unless:
+   - Clarification would not materially change implementation or validation strategy.
+   - Information is better deferred to the planning phase (note internally).
+
+4. **Generate (internally) a prioritized queue** of candidate clarification questions (maximum 5). Do NOT output them all at once. Apply these constraints:
+   - Maximum of 5 total questions across the whole session.
+   - Each question must be answerable with EITHER:
+     - A short multiple-choice selection (2–5 distinct, mutually exclusive options), OR
+     - A one-word / short-phrase answer (explicitly constrain: "Answer in <=5 words").
+   - Only include questions whose answers materially impact architecture, data modeling, task decomposition, test design, UX behavior, operational readiness, or compliance validation.
+   - Ensure category coverage balance: cover the highest-impact unresolved categories first; avoid asking two low-impact questions when a single high-impact area (e.g., security posture) is unresolved.
+   - Exclude questions already answered, trivial stylistic preferences, or plan-level execution details (unless blocking correctness).
+   - Favor clarifications that reduce downstream rework risk or prevent misaligned acceptance tests.
+   - If more than 5 categories remain unresolved, select the top 5 by (Impact × Uncertainty) heuristic.
+
+5. **Sequential questioning loop** (interactive):
+   - Present EXACTLY ONE question at a time.
+   - **Question writing quality (applies to every question, MC or short-answer):**
+     - Lead with `**Question:**` followed by a full interrogative that ends with `?`. The question text before the `?` must make sense on its own.
+     - NEVER use a topic label, section heading, or requirement id as the question itself. For example, `Acceptance device/runtime matrix (FR-023)` is INVALID — it is a label, not a question.
+     - After the `?`, the only permitted suffix is an optional parenthesized requirement/question id. Exact format: `**Question:** <interrogative>?` or `**Question:** <interrogative>? (FR-023)`. Never put the id before the `?`, and never use the id (alone or with a topic label) as the whole prompt.
+     - Immediately after the question line, add one plain-language "Why it matters" sentence (the stake for acceptance or shipping) before the recommendation/options.
+     - Use everyday wording; introduce jargon only if defined in the same sentence. Self-check: a reader who does not know Spec Kit must be able to answer from the Question line alone. Terse is fine; cryptic labels are not.
+   - For multiple-choice questions:
+     - Analyze all options and determine the most suitable option based on: best practices for the project type, common patterns in similar implementations, risk reduction (security, performance, maintainability), and alignment with any explicit project goals or constraints visible in the spec.
+     - Present your recommended option prominently at the top with clear reasoning (1-2 sentences explaining why this is the best choice).
+     - Format as: `**Recommended:** Option [X] - <reasoning>`
+     - Then render all options as a Markdown table:
+
+       | Option | Description |
+       |--------|-------------|
+       | A | <Option A description> |
+       | B | <Option B description> |
+       | C | <Option C description> (add D/E as needed up to 5) |
+       | Short | Provide a different short answer (<=5 words) (Include only if a free-form alternative is appropriate) |
+
+     - After the table, add: `You can reply with the option letter (e.g., "A"), accept the recommendation by saying "yes" or "recommended", or provide your own short answer.`
+   - For short-answer style (no meaningful discrete options):
+     - Provide your suggested answer based on best practices and context.
+     - Format as: `**Suggested:** <your proposed answer> - <brief reasoning>`
+     - Then output: `Format: Short answer (<=5 words). You can accept the suggestion by saying "yes" or "suggested", or provide your own answer.`
+   - After the user answers:
+     - If the user replies with "yes", "recommended", or "suggested", use your previously stated recommendation/suggestion as the answer.
+     - Otherwise, validate the answer maps to one option or fits the <=5 word constraint.
+     - If ambiguous, ask for a quick disambiguation (the count still belongs to the same question; do not advance).
+     - Once satisfactory, record it in working memory (do not yet write to disk) and move to the next queued question.
+   - Stop asking further questions when:
+     - All critical ambiguities resolved early (remaining queued items become unnecessary), OR
+     - The user signals completion ("done", "good", "no more"), OR
+     - You reach 5 asked questions.
+   - Never reveal future queued questions in advance.
+   - If no valid questions exist at the start, immediately report no critical ambiguities.
+
+6. **Integration after EACH accepted answer** (incremental update approach):
+   - Maintain an in-memory representation of the spec (loaded once at start) plus the raw file contents.
+   - For the first integrated answer in this session:
+     - Ensure a `## Clarifications` section exists (create it just after the highest-level contextual/overview section per the spec template if missing).
+     - Under it, create (if not present) a `### Session YYYY-MM-DD` subheading for today.
+   - Append a bullet line immediately after acceptance: `- Q: <question> → A: <final answer>`.
+   - Then immediately apply the clarification to the most appropriate section(s):
+     - Functional ambiguity → update or add a bullet in Functional Requirements.
+     - User interaction / actor distinction → update User Stories or Actors subsection (if present) with the clarified role, constraint, or scenario.
+     - Data shape / entities → update Data Model (add fields, types, relationships) preserving ordering; note added constraints succinctly.
+     - Non-functional constraint → add/modify measurable criteria in Success Criteria > Measurable Outcomes (convert vague adjective to metric or explicit target).
+     - Edge case / negative flow → add a new bullet under Edge Cases / Error Handling (or create such a subsection if the template provides a placeholder for it).
+     - Terminology conflict → normalize the term across the spec; retain the original only if necessary by adding `(formerly referred to as "X")` once.
+   - If the clarification invalidates an earlier ambiguous statement, replace that statement instead of duplicating; leave no obsolete contradictory text.
+   - Save the spec file AFTER each integration to minimize risk of context loss (atomic overwrite).
+   - Preserve formatting: do not reorder unrelated sections; keep heading hierarchy intact.
+   - Keep each inserted clarification minimal and testable (avoid narrative drift).
+
+7. **Validation** (performed after EACH write plus a final pass):
+   - Clarifications session contains exactly one bullet per accepted answer (no duplicates).
+   - Total asked (accepted) questions ≤ 5.
+   - Updated sections contain no lingering vague placeholders the new answer was meant to resolve.
+   - No contradictory earlier statement remains (scan for now-invalid alternative choices removed).
+   - Markdown structure valid; only allowed new headings: `## Clarifications`, `### Session YYYY-MM-DD`.
+   - Terminology consistency: same canonical term used across all updated sections.
+
+8. Write the updated spec back to `FEATURE_SPEC`.
+
+9. **Re-validate Spec Quality Checklist** (if it exists):
+   - Check if `FEATURE_DIR/checklists/requirements.md` exists.
+   - If it does NOT exist, skip this step silently.
+   - If it exists:
+     1. Read the checklist file.
+     2. Identify all GitHub task-list checkbox lines — lines matching `- [ ]`, `- [x]`, or `- [X]` (case-insensitive, tolerant of leading whitespace for nested items) outside of code fences. Ignore all other content (headings, notes, non-checkbox bullets, metadata).
+     3. For each checkbox line, record its current marker state (checked or unchecked) and item text into a before-snapshot list.
+     4. Re-evaluate each checkbox item against the **updated** spec (the version just saved in step 7).
+     5. For each checkbox item, update only if the checked/unchecked state actually changes:
+        - If the item now passes and was unchecked: change `[ ]` to `[x]`.
+        - If the item now fails and was checked: change `[x]`/`[X]` to `[ ]`.
+        - If the state is unchanged: leave the marker as-is (preserve existing case to avoid cosmetic diffs).
+     6. Save the updated checklist file. **Only toggle the `[ ]`/`[x]` marker portion of checkbox lines whose state changed.** All other file content — headings, metadata, notes, line ordering, whitespace — must remain unchanged to avoid noisy diffs.
+     7. Compare the before-snapshot with the current state to compute three lists for the Completion Report:
+        - **Newly passing**: items that changed from unchecked to checked.
+        - **Regressions**: items that changed from checked to unchecked.
+        - **Still unchecked**: items that remain unchecked.
+     8. Record the before/after pass counts as checked/total checkbox items (e.g., "12/16 → 15/16 items passing").
+
+## Behavior Rules
+
+- If no meaningful ambiguities are found (or all potential questions would be low-impact), respond: "No critical ambiguities detected worth formal clarification." and suggest proceeding.
+- If the spec file is missing, instruct the user to run `sdd-specify` first (do not create a new spec here).
+- Never exceed 5 total asked questions (clarification retries for a single question do not count as new questions).
+- Avoid speculative tech-stack questions unless the absence blocks functional clarity.
+- Respect user early-termination signals ("stop", "done", "proceed").
+- If no questions are asked due to full coverage, output a compact coverage summary (all categories Clear) then suggest advancing.
+- If the quota is reached with unresolved high-impact categories remaining, explicitly flag them under Deferred with rationale.
+
+## Completion Report
+
+Report completion (after the questioning loop ends or early termination):
+- Number of questions asked & answered.
+- Path to the updated spec.
+- Sections touched (list names).
+- Spec quality checklist status (if `FEATURE_DIR/checklists/requirements.md` was re-validated): show before/after pass counts (e.g., "Spec Quality Checklist: 12/16 → 15/16 items passing") and list any items that changed state — both newly checked (unchecked → checked) and any regressions (checked → unchecked). If any items remain unchecked, list them as areas needing attention.
+- Coverage summary table listing each taxonomy category with Status: Resolved (was Partial/Missing and addressed), Deferred (exceeds question quota or better suited for planning), Clear (already sufficient), Outstanding (still Partial/Missing but low impact).
+- If any Outstanding or Deferred remain, recommend whether to proceed to `sdd-plan` or run `sdd-clarify` again later post-plan.
+- Suggested next skill.
+
+**Next**: invoke the `sdd-plan` skill to build the technical plan from the clarified spec.
+
+## Done When
+
+- [ ] Spec ambiguities identified and clarifications integrated into the spec file.
+- [ ] Spec quality checklist re-validated against the updated spec (if `FEATURE_DIR/checklists/requirements.md` exists).
+- [ ] Completion reported to user with questions answered, sections touched, checklist status, and coverage summary.
+
+---
+_Ported from [GitHub Spec-Kit](https://github.com/github/spec-kit) `templates/commands/clarify.md` (CC0/MIT). Licensed under MIT — see repository LICENSE. Logic preserved for DeepSeek Harness skill execution._
