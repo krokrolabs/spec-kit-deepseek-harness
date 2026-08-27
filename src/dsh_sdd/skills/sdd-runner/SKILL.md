@@ -21,7 +21,7 @@ GOAL=<feature description>   AUTO_APPROVE=true|false   (default false)
 
 ## Phases
 
-**0. Constitution.** Read `memory/constitution.md` if present; else run the `sdd-constitution` skill first. Constitution violations block progression at every gate.
+**0. Constitution.** Read `memory/constitution.md` if present; else run the `sdd-constitution` skill first. Then run the **`sdd-guardian` coverage check** against the GOAL's change surface: if the feature introduces tools, task types, integrations, or capabilities with no governing constitutional rule, resolve the gaps with the user BEFORE proceeding to specify. Constitution violations block progression at every gate.
 
 **1. Specify.** Load the `sdd-specify` skill and follow it. Output: branch `<NNN>-<slug>`, `specs/<NNN-slug>/spec.md`. If `[NEEDS CLARIFICATION]` markers remain, run the `sdd-clarify` skill and encode answers back.
 

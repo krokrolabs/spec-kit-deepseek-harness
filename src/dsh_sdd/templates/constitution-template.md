@@ -38,12 +38,13 @@ Any intentional breach is documented with rationale in Complexity Tracking.
 
 ## Development Workflow
 
-1. `sdd-specify` — feature description → `spec.md` + branch `<NNN>-<slug>`.
-2. `sdd-clarify` — resolve `[NEEDS CLARIFICATION]` markers.
-3. `sdd-plan` — spec → `plan.md`, `data-model.md`, `contracts/`, `quickstart.md`; spawn research subagent.
-4. `sdd-tasks` — plan → `tasks.md` with `[P]` parallel markers.
-5. `sdd-analyze` — constitution compliance + consistency check.
-6. `sdd-implement` — execute tasks (test-first) via task subagents.
+1. `sdd-guardian` — at intake of any new tool/task/capability, verify constitutional coverage; amend BEFORE implementing anything not yet governed.
+2. `sdd-specify` — feature description → `spec.md` + branch `<NNN>-<slug>`.
+3. `sdd-clarify` — resolve `[NEEDS CLARIFICATION]` markers.
+4. `sdd-plan` — spec → `plan.md`, `data-model.md`, `contracts/`, `quickstart.md`; spawn research subagent.
+5. `sdd-tasks` — plan → `tasks.md` with `[P]` parallel markers.
+6. `sdd-analyze` — constitution compliance + consistency check.
+7. `sdd-implement` — execute tasks (test-first) via task subagents.
 
 All PRs and reviews must verify compliance with this constitution.
 

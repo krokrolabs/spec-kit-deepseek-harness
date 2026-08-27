@@ -17,11 +17,12 @@ Brings [GitHub Spec-Kit](https://github.com/github/spec-kit)'s Spec-Driven Devel
 
 SDD is installed into a project as **skills** in `.dsh/skills/<name>/SKILL.md`. DSH's `skill-filesystem` provider discovers them automatically (per-project; they hot-reload). Long or parallelizable work is spawned as **subagents** (`research`, `task`, `consistency`) from those skills. No global installs, no custom plugins.
 
-### The 10 skills
+### The 11 skills
 
 | Skill | Step | Produces |
 |---|---|---|
 | `sdd-runner` | Drive the whole cycle as a goal | orchestrated specify→plan→tasks→implement→analyze, wave dispatch |
+| `sdd-guardian` | Constitution coverage at intake | coverage table + amendments BEFORE ungoverned work starts |
 | `sdd-constitution` | Set up governance | `memory/constitution.md` |
 | `sdd-specify` | Specify a feature | `specs/<NNN-slug>/spec.md` + branch |
 | `sdd-clarify` | Resolve ambiguities | updated `spec.md` |

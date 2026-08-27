@@ -21,6 +21,7 @@ SKILL_NAMES = {
     "sdd-implement",
     "sdd-checklist",
     "sdd-runner",
+    "sdd-guardian",
 }
 
 
