@@ -39,12 +39,12 @@ Requires **Python ≥ 3.11** and `pip`. [`uv`](https://docs.astral.sh/uv/) is th
 
 ```bash
 # Option A — one-shot with uv (isolated env created and managed for you):
-uv tool install "git+ssh://git@github.com/rafael-ariascalles/spec-kit-deepseek-harness.git"
+uv tool install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git"
 
-# Option B — inside your own venv (uv or pip):
-uv pip install "git+ssh://git@github.com/rafael-ariascalles/spec-kit-deepseek-harness.git"
+# Option B — inside your own venv (uv or pip); the public repo needs no SSH key:
+uv pip install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git"
 # or:
-pip install "git+ssh://git@github.com/rafael-ariascalles/spec-kit-deepseek-harness.git"
+pip install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git"
 
 # Option C — from a local checkout:
 pip install .   # or: uv pip install .
