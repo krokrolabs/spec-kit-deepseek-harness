@@ -73,6 +73,7 @@ Learnings: <entry date> | Next: open PR / converge / follow-up spec
 - No secrets in state, prompts, or reports — env var names only.
 - Spawn depth: runner → implementer/reviewer is the deepest layer; implementers never spawn subagents.
 - If a subagent returns empty/fails, note it and retry once with a tighter prompt before re-reporting.
+- **Subagent policy (DSH delegation contract):** spawned children inherit a fixed sandbox scope and a `never` approval policy and cannot escalate it. Implementer/reviewer units must stay inside the session's writable workspace; a unit needing wider access ends with that limitation reported (status `blocked`), never retried or worked around.
 
 ---
 _Adapted for DeepSeek Harness from the goal-coordinator / sdd-runner agent pattern (dispatch waves, per-wave independent review, persistent cycle state). Orchestration uses DSH goal tools, the `subagent` tool, and the SDD skills in this repository._
