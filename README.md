@@ -17,10 +17,12 @@ Brings [GitHub Spec-Kit](https://github.com/github/spec-kit)'s Spec-Driven Devel
 
 SDD is installed into a project as **skills** in `.dsh/skills/<name>/SKILL.md`. DSH's `skill-filesystem` provider discovers them automatically (per-project; they hot-reload). Long or parallelizable work is spawned as **subagents** (`research`, `task`, `consistency`) from those skills. No global installs, no custom plugins.
 
-### The 9 skills
+### The 11 skills
 
 | Skill | Step | Produces |
 |---|---|---|
+| `sdd-runner` | Drive the whole cycle as a goal | orchestrated specify→plan→tasks→implement→analyze, wave dispatch |
+| `sdd-guardian` | Constitution coverage at intake | coverage table + amendments BEFORE ungoverned work starts |
 | `sdd-constitution` | Set up governance | `memory/constitution.md` |
 | `sdd-specify` | Specify a feature | `specs/<NNN-slug>/spec.md` + branch |
 | `sdd-clarify` | Resolve ambiguities | updated `spec.md` |
@@ -32,6 +34,13 @@ SDD is installed into a project as **skills** in `.dsh/skills/<name>/SKILL.md`. 
 | `sdd-checklist` | Requirements quality | `checklists/<domain>.md` |
 
 You don't have to type commands — say things like *"spec out user auth"*, *"plan the spec"*, *"break it into tasks"* and DSH surfaces the matching skill.
+
+## Goal-driven cycle (orchestrated)
+
+`sdd-runner` turns one feature description into an autonomous run: it creates a **DSH goal** (same-session, resumable across rounds via the `/goal` command/goal tools), drives the SDD skills in order, pauses at spec/plan review gates for approval, then dispatches implementation in **parallel waves of implementer subagents** (disjoint file ownership, test-first), each wave gated by an **independent reviewer subagent**. State persists in `specs/<NNN-slug>/cycle-state.json` so interrupted runs resume.
+
+Kick it off by describing a goal, e.g. *"Run the SDD cycle for: real-time notifications per user"*. The role prompts live in `.dsh/sdd/agents/` — `implementer.md` (test-first unit implementer) and `implementation-reviewer.md` (independent wave gatekeeper), alongside `research-agent.md`, `task-agent.md`, `consistency-agent.md`.
+
 
 ## Install
 
@@ -87,6 +96,23 @@ dsh-sdd uninstall --force # remove even user-modified files
 ```
 
 Install is **manifest-tracked**: uninstall removes only files byte-identical to what was installed, skipping anything you edited by hand.
+
+## Releases & updating
+
+Stable installs pin a release tag — reproducible and isolated from `main`:
+
+```bash
+uv tool install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.2.0"
+```
+
+To move a project to a newer release:
+
+```bash
+uv tool install --force "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v<new>" # refresh the CLI
+dsh-sdd install                    # refresh the project's skills/templates/agents
+```
+
+`dsh-sdd install` overwrites bundled assets with the new versions and re-records the manifest; files you hand-edited are **not** touched (they keep their content and are skipped on uninstall). Releases and tags live at [github.com/krokrolabs/spec-kit-deepseek-harness/releases](https://github.com/krokrolabs/spec-kit-deepseek-harness/releases).
 
 ## The workflow
 

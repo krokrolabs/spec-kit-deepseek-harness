@@ -20,6 +20,8 @@ SKILL_NAMES = {
     "sdd-converge",
     "sdd-implement",
     "sdd-checklist",
+    "sdd-runner",
+    "sdd-guardian",
 }
 
 
@@ -54,6 +56,8 @@ def test_install_scaffolds_everything(repo: Path) -> None:
     # Templates, agents, constitution, specs
     assert (repo / ".dsh" / "sdd" / "templates" / "spec-template.md").is_file()
     assert (repo / ".dsh" / "sdd" / "agents" / "research-agent.md").is_file()
+    assert (repo / ".dsh" / "sdd" / "agents" / "implementer.md").is_file()
+    assert (repo / ".dsh" / "sdd" / "agents" / "implementation-reviewer.md").is_file()
     assert (repo / "memory" / "constitution.md").is_file()
     assert (repo / "specs" / ".gitkeep").is_file()
     # Manifest saved and records files
