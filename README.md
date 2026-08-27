@@ -35,12 +35,33 @@ You don't have to type commands — say things like *"spec out user auth"*, *"pl
 
 ## Install
 
-Requires **Python ≥ 3.11** and `pip`.
+Requires **Python ≥ 3.11** and `pip`. [`uv`](https://docs.astral.sh/uv/) is the recommended installer.
 
 ```bash
-pip install .            # from this repo, or: pip install dsh-sdd
-cd /path/to/your-project # inside a git repo (project root detected via .git)
+# Option A — one-shot with uv (isolated env created and managed for you):
+uv tool install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git"
+
+# Option B — inside your own venv (uv or pip); the public repo needs no SSH key:
+uv pip install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git"
+# or:
+pip install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git"
+
+# Option C — from a local checkout:
+pip install .   # or: uv pip install .
+
+# Then, inside a git repo (project root detected via .git):
+cd /path/to/your-project
 dsh-sdd init
+```
+
+With `uv tool install` the `dsh-sdd` command is on your PATH with no venv to
+activate. Upgrade later with `uv tool upgrade dsh-sdd`; remove it with
+`uv tool uninstall dsh-sdd`.
+
+Verify the install:
+
+```bash
+dsh-sdd list   # should show 9 sdd-* skills, templates, agents, and constitution: present
 ```
 
 `init` scaffolds:
