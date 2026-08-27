@@ -109,10 +109,10 @@ Stable installs pin a release tag — reproducible and isolated from `main`:
 uv tool install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.2.0"
 ```
 
-To move a project to a newer release:
+To upgrade to the latest release, reinstall the CLI with `--force` (same command, new tag — the tag below always tracks the latest release), then refresh the project's assets:
 
 ```bash
-uv tool install --force "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v<new>" # refresh the CLI
+uv tool install --force "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.2.0"   # refresh the CLI
 dsh-sdd install                    # refresh the project's skills/templates/agents
 ```
 
