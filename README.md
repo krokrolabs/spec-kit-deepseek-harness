@@ -47,13 +47,15 @@ Kick it off by describing a goal, e.g. *"Run the SDD cycle for: real-time notifi
 Requires **Python ≥ 3.11** and `pip`. [`uv`](https://docs.astral.sh/uv/) is the recommended installer.
 
 ```bash
-# Option A — one-shot with uv (isolated env created and managed for you):
-uv tool install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git"
+# Option A — one-shot with uv, pinned to the latest release (v0.2.0):
+uv tool install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.2.0"
 
 # Option B — inside your own venv (uv or pip); the public repo needs no SSH key:
-uv pip install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git"
+uv pip install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.2.0"
 # or:
-pip install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git"
+pip install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.2.0"
+
+# Or unpinned (tracks main): drop the "@v0.2.0" suffix from any command above.
 
 # Option C — from a local checkout:
 pip install .   # or: uv pip install .
@@ -63,14 +65,16 @@ cd /path/to/your-project
 dsh-sdd init
 ```
 
+> The `@v…` tags in this README always point at the **latest release** — copy-paste as-is.
+
 With `uv tool install` the `dsh-sdd` command is on your PATH with no venv to
-activate. Upgrade later with `uv tool upgrade dsh-sdd`; remove it with
-`uv tool uninstall dsh-sdd`.
+activate. See [Releases & updating](#releases--updating) for upgrades; remove
+it with `uv tool uninstall dsh-sdd`.
 
 Verify the install:
 
 ```bash
-dsh-sdd list   # should show 9 sdd-* skills, templates, agents, and constitution: present
+dsh-sdd list   # should show 11 sdd-* skills, templates, agents, and constitution: present
 ```
 
 `init` scaffolds:
@@ -113,6 +117,17 @@ dsh-sdd install                    # refresh the project's skills/templates/agen
 ```
 
 `dsh-sdd install` overwrites bundled assets with the new versions and re-records the manifest; files you hand-edited are **not** touched (they keep their content and are skipped on uninstall). Releases and tags live at [github.com/krokrolabs/spec-kit-deepseek-harness/releases](https://github.com/krokrolabs/spec-kit-deepseek-harness/releases).
+
+## Releasing (maintainers)
+
+1. Bump `version` in `pyproject.toml` and `src/dsh_sdd/__init__.py`; land changes via PR.
+2. **Update every `@v…` tag in this README** (Install Options A/B and the Releases section) to the new tag *in the same release PR* — the README always documents the latest release so commands stay copy-paste-exact.
+3. Tag and release:
+   ```bash
+   git tag -a vX.Y.Z -m "vX.Y.Z — <summary>"
+   git push origin vX.Y.Z
+   gh release create vX.Y.Z --title "vX.Y.Z — <summary>" --notes "…"
+   ```
 
 ## The workflow
 
