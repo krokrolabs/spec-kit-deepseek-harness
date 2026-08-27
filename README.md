@@ -41,6 +41,8 @@ You don't have to type commands — say things like *"spec out user auth"*, *"pl
 
 Kick it off by describing a goal, e.g. *"Run the SDD cycle for: real-time notifications per user"*. The role prompts live in `.dsh/sdd/agents/` — `implementer.md` (test-first unit implementer) and `implementation-reviewer.md` (independent wave gatekeeper), alongside `research-agent.md`, `task-agent.md`, `consistency-agent.md`.
 
+**Model routing:** implementer and reviewer units can run on a different model than the session. Set `IMPLEMENTER_MODEL=<model>` (e.g. `qwen3.8`) to dispatch implementer waves through workflow agents on that model, and `REVIEWER_MODEL=<model>` for the reviewer — e.g. *"Run the SDD cycle for X, implementers on qwen3.8"*. Without overrides, units run on the session model via plain subagents.
+
 
 ## Install
 
@@ -48,14 +50,14 @@ Requires **Python ≥ 3.11** and `pip`. [`uv`](https://docs.astral.sh/uv/) is th
 
 ```bash
 # Option A — one-shot with uv, pinned to the latest release (v0.2.0):
-uv tool install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.2.0"
+uv tool install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.3.0"
 
 # Option B — inside your own venv (uv or pip); the public repo needs no SSH key:
-uv pip install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.2.0"
+uv pip install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.3.0"
 # or:
-pip install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.2.0"
+pip install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.3.0"
 
-# Or unpinned (tracks main): drop the "@v0.2.0" suffix from any command above.
+# Or unpinned (tracks main): drop the "@v0.3.0" suffix from any command above.
 
 # Option C — from a local checkout:
 pip install .   # or: uv pip install .
@@ -106,13 +108,13 @@ Install is **manifest-tracked**: uninstall removes only files byte-identical to 
 Stable installs pin a release tag — reproducible and isolated from `main`:
 
 ```bash
-uv tool install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.2.0"
+uv tool install "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.3.0"
 ```
 
 To upgrade to the latest release, reinstall the CLI with `--force` (same command, new tag — the tag below always tracks the latest release), then refresh the project's assets:
 
 ```bash
-uv tool install --force "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.2.0"   # refresh the CLI
+uv tool install --force "git+https://github.com/krokrolabs/spec-kit-deepseek-harness.git@v0.3.0"   # refresh the CLI
 dsh-sdd install                    # refresh the project's skills/templates/agents
 ```
 

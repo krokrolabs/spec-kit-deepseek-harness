@@ -16,7 +16,8 @@ You own one GOAL from intake to verified close. You do not write feature code yo
 ## Inputs
 
 ```text
-GOAL=<feature description>   AUTO_APPROVE=true|false   (default false)
+GOAL=<feature description>   AUTO_APPROVE=true|false          (default false)
+IMPLEMENTER_MODEL=<model>    REVIEWER_MODEL=<model>           (optional; DSH registry model ids, e.g. qwen3.8)
 ```
 
 ## Phases
@@ -38,7 +39,7 @@ GOAL=<feature description>   AUTO_APPROVE=true|false   (default false)
    - **6.1 Preflight.** Read `tasks.md`, `plan.md`, `contracts/`, `data-model.md`, `quickstart.md`. Determine the test + lint commands from `plan.md`/repo conventions. Confirm the branch is `<NNN>-<slug>`.
    - **6.2 Units.** A test task and the implementation task it guards form ONE unit (test-first is a single agent's job). Otherwise a unit is one task. A unit's owned files = paths in its tasks + tests it adds.
    - **6.3 Waves.** Within a phase: units with pairwise-disjoint owned files run in parallel (spawn all in one message; cap 4). Anything else runs alone, in order. Phases never overlap. `tasks.md` is shared: implementers flip only their own checkboxes.
-   - **6.4 Dispatch.** Spawn one `subagent` per unit using the role prompt at `.dsh/sdd/agents/implementer.md` plus this shape:
+   - **6.4 Dispatch.** Every unit prompt is the role prompt from `.dsh/sdd/agents/implementer.md` plus this shape:
      ```text
      UNIT <wave>.<n> for GOAL: <goal>
      Feature dir: specs/<NNN-slug>   Branch: <name>
@@ -49,9 +50,18 @@ GOAL=<feature description>   AUTO_APPROVE=true|false   (default false)
      Constitution reminders: test-first (observe failing first); no secrets; env var names only.
      Return the report block from your role prompt.
      ```
-   - **6.5 Review per wave.** After a wave's subagents settle, spawn one reviewer `subagent` with the role prompt at `.dsh/sdd/agents/implementation-reviewer.md`, the wave's task ids, test/lint commands, and spec/plan paths.
+     Dispatch mode:
+     - **Default (no model override):** spawn one `subagent` per unit in a single message (parallel background agents), up to 4 concurrent.
+     - **With IMPLEMENTER_MODEL set:** dispatch the wave through the `workflow` tool so each unit runs on its own model:
+       ```js
+       const reports = await parallel(units.map(u => () =>
+         agent(implementerPrompt(u), { model: "<IMPLEMENTER_MODEL>", label: `unit-${u.id}` })
+       ))  // one barrier per wave; null results retry once with a tighter prompt
+       ```
+       Workflow agents are full subagents with standard tools; per-agent `model`/`provider` overrides are supported. Do not start the next wave until the barrier settles.
+   - **6.5 Review per wave.** After a wave's subagents settle, spawn one reviewer via `subagent` with the role prompt at `.dsh/sdd/agents/implementation-reviewer.md`, the wave's task ids, test/lint commands, and spec/plan paths. If REVIEWER_MODEL is set, run the reviewer through `workflow` instead: `agent(reviewerPrompt, { model: "<REVIEWER_MODEL>" })`; otherwise it uses the session model.
      - `PASS` → verify the wave's checkboxes are `[X]`, commit on the spec branch (`feat(NNN): T0xx–T0yy <what>`), update cycle state.
-     - `FAIL` → re-dispatch the failing unit(s) with the reviewer findings. Prefer `send_message` to the same implementer subagent (it retains context); `subagent_fork` to a fresh retry carrying the findings if the original is gone. After TWO consecutive failures on one unit, stop and report the blocker to the user — do not loop.
+     - `FAIL` → re-dispatch the failing unit(s) with the reviewer findings. With `subagent`, prefer `send_message` to the same implementer (it retains context) or `subagent_fork` to a fresh retry carrying the findings. With `workflow` dispatch (agents are ephemeral), re-run the unit with a fresh `agent()` call whose prompt embeds the reviewer findings. After TWO consecutive failures on one unit, stop and report the blocker to the user — do not loop.
    - **6.6 End of phase.** All tasks `[X]`, full test suite + lint green.
 7. **Analyze.** Load the `sdd-analyze` skill (spawn the consistency subagent if instructed) across spec/plan/tasks/constitution. Resolve BLOCKERs before closing.
 8. **Learn.** Append a dated entry to `memory/learnings.md` (create it if absent): what surprised, what failed first, what to reuse. One entry, ≤10 lines. Skip quietly if nothing notable.
@@ -73,6 +83,7 @@ Learnings: <entry date> | Next: open PR / converge / follow-up spec
 - No secrets in state, prompts, or reports — env var names only.
 - Spawn depth: runner → implementer/reviewer is the deepest layer; implementers never spawn subagents.
 - If a subagent returns empty/fails, note it and retry once with a tighter prompt before re-reporting.
+- Model overrides are DSH registry model ids (e.g. `qwen3.8`). If a `workflow` unit fails due to an unknown model/provider, surface the error and fall back to the session model for the remaining units.
 - **Subagent policy (DSH delegation contract):** spawned children inherit a fixed sandbox scope and a `never` approval policy and cannot escalate it. Implementer/reviewer units must stay inside the session's writable workspace; a unit needing wider access ends with that limitation reported (status `blocked`), never retried or worked around.
 
 ---
